@@ -1,0 +1,137 @@
+======================================================================
+CONFIGURACIÓN DE LA GAN
+======================================================================
+Categoría de Quick Draw usada : 'cat'
+Imágenes de entrenamiento     : 30,000
+Tamaño de imagen              : 28x28 (1 canal, escala de grises)
+Dimensión del ruido z         : 100
+Tamaño de lote / épocas       : 128 / 25
+Learning rate G / D           : 0.0002 / 0.0002
+Optimizador                   : Adam (beta1=0.5, beta2=0.999)
+Dispositivo                   : cpu
+
+Dibujos disponibles de 'cat': 123,202  (cada uno con 784 píxeles)
+Tensor de entrenamiento: (30000, 1, 28, 28)  rango [-1, 1]
+Lotes por época: 234
+
+==============================================================================
+RED GENERADORA (G): ruido z -> imagen falsa
+==============================================================================
+Capa              Tipo              Forma de salida           Parámetros
+------------------------------------------------------------------------------
+(entrada)                           [100]                               
+capa1_lineal      Linear            [6272]                       627,200
+capa1_batchnorm   BatchNorm1d       [6272]                        12,544
+capa1_relu        ReLU              [6272]                             0
+redimensionar     Unflatten         [128, 7, 7]                        0
+capa2_deconv      ConvTranspose2d   [64, 14, 14]                 131,072
+capa2_batchnorm   BatchNorm2d       [64, 14, 14]                     128
+capa2_relu        ReLU              [64, 14, 14]                       0
+capa3_deconv      ConvTranspose2d   [1, 28, 28]                    1,025
+salida_tanh       Tanh              [1, 28, 28]                        0
+------------------------------------------------------------------------------
+TOTAL de parámetros entrenables:                                       771,969
+
+==============================================================================
+RED DISCRIMINADORA (D): imagen -> probabilidad de ser real
+==============================================================================
+Capa              Tipo              Forma de salida           Parámetros
+------------------------------------------------------------------------------
+(entrada)                           [1, 28, 28]                         
+capa1_conv        Conv2d            [64, 14, 14]                   1,088
+capa1_leakyrelu   LeakyReLU         [64, 14, 14]                       0
+capa2_conv        Conv2d            [128, 7, 7]                  131,072
+capa2_batchnorm   BatchNorm2d       [128, 7, 7]                      256
+capa2_leakyrelu   LeakyReLU         [128, 7, 7]                        0
+aplanar           Flatten           [6272]                             0
+capa3_lineal      Linear            [1]                            6,273
+salida_sigmoid    Sigmoid           [1]                                0
+------------------------------------------------------------------------------
+TOTAL de parámetros entrenables:                                       138,689
+
+--- Valores INICIALES de los pesos del GENERADOR (antes de entrenar) ---
+Parámetro                   Forma                   Media    Desv.      Mín      Máx
+capa1_lineal.weight         [6272, 100]           -0.0000   0.0200  -0.0920   0.0919
+capa1_batchnorm.weight      [6272]                 1.0000   0.0198   0.9137   1.0729
+capa1_batchnorm.bias        [6272]                 0.0000   0.0000   0.0000   0.0000
+capa2_deconv.weight         [128, 64, 4, 4]        0.0000   0.0200  -0.0883   0.0921
+capa2_batchnorm.weight      [64]                   0.9982   0.0176   0.9595   1.0379
+capa2_batchnorm.bias        [64]                   0.0000   0.0000   0.0000   0.0000
+capa3_deconv.weight         [64, 1, 4, 4]         -0.0006   0.0191  -0.0622   0.0619
+capa3_deconv.bias           [1]                    0.0000   0.0000   0.0000   0.0000
+
+--- Valores INICIALES de los pesos del DISCRIMINADOR (antes de entrenar) ---
+Parámetro                   Forma                   Media    Desv.      Mín      Máx
+capa1_conv.weight           [64, 1, 4, 4]         -0.0005   0.0201  -0.0710   0.0606
+capa1_conv.bias             [64]                   0.0000   0.0000   0.0000   0.0000
+capa2_conv.weight           [128, 64, 4, 4]        0.0001   0.0200  -0.0897   0.0895
+capa2_batchnorm.weight      [128]                  0.9985   0.0201   0.9435   1.0490
+capa2_batchnorm.bias        [128]                  0.0000   0.0000   0.0000   0.0000
+capa3_lineal.weight         [1, 6272]              0.0003   0.0200  -0.0683   0.0761
+capa3_lineal.bias           [1]                    0.0000   0.0000   0.0000   0.0000
+
+Primeros 5 pesos de G.capa1_lineal : [-0.04883730784058571, -0.007801221217960119, -0.02398579567670822, 0.0030957262497395277, 0.018380343914031982]
+Primeros 5 pesos de D.capa1_conv   : [-0.023334309458732605, 0.0039965868927538395, -0.010581054724752903, 0.019831741228699684, -0.016192076727747917]
+D(G(z)) con las redes sin entrenar: 0.524  (D aún no sabe distinguir: ~0.5)
+
+==============================================================================
+ENTRENAMIENTO  |  categoría 'cat'  |  25 épocas x 234 lotes
+==============================================================================
+  Época   Pérdida D   Pérdida G     D(x)   D(G(z))   Tiempo
+   1/25      0.3411      3.0528    0.884     0.128    42.4s
+   2/25      0.4340      2.4252    0.837     0.160    47.6s
+   3/25      0.4428      2.1861    0.826     0.176    47.9s
+   4/25      0.2764      2.5135    0.880     0.119    47.3s
+   5/25      0.2436      2.8450    0.906     0.095    67.0s
+   6/25      0.3161      2.8857    0.894     0.107    64.2s
+   7/25      0.3462      2.8625    0.883     0.116    31.2s
+   8/25      0.1617      3.0777    0.927     0.074    66.9s
+   9/25      0.2640      3.0630    0.910     0.089    32.2s
+  10/25      0.3232      3.0690    0.900     0.100    32.3s
+  11/25      0.2615      3.1967    0.915     0.085    37.3s
+  12/25      0.1148      3.4621    0.947     0.053    31.0s
+  13/25      0.3058      3.3450    0.917     0.083    32.9s
+  14/25      0.0975      3.6331    0.955     0.046    29.4s
+  15/25      0.5774      3.1587    0.850     0.145    31.4s
+  16/25      0.4161      2.2929    0.834     0.166    28.7s
+  17/25      0.3279      2.7603    0.883     0.117    27.6s
+  18/25      0.2451      3.1928    0.915     0.085    30.2s
+  19/25      0.3190      3.3095    0.913     0.087    29.8s
+  20/25      0.1232      3.4301    0.944     0.057    36.4s
+  21/25      0.0817      3.9790    0.963     0.038    33.6s
+  22/25      0.0674      4.2255    0.969     0.032    34.0s
+  23/25      0.4745      3.5909    0.891     0.107    32.5s
+  24/25      0.1223      3.6125    0.947     0.055    30.1s
+  25/25      0.0640      4.2450    0.970     0.030    32.7s
+Tiempo total de entrenamiento: 15.9 minutos
+
+--- Valores FINALES de los pesos del GENERADOR (después de entrenar) ---
+Parámetro                   Forma                   Media    Desv.      Mín      Máx
+capa1_lineal.weight         [6272, 100]           -0.0001   0.0266  -0.1236   0.1205
+capa1_batchnorm.weight      [6272]                 0.9838   0.1019   0.6516   1.3849
+capa1_batchnorm.bias        [6272]                -0.0250   0.1099  -0.3410   0.3300
+capa2_deconv.weight         [128, 64, 4, 4]       -0.0031   0.0266  -0.1773   0.2050
+capa2_batchnorm.weight      [64]                   1.4171   0.1162   1.1662   1.7006
+capa2_batchnorm.bias        [64]                   0.0999   0.1200  -0.2195   0.3496
+capa3_deconv.weight         [64, 1, 4, 4]         -0.0363   0.1044  -0.3811   0.2525
+capa3_deconv.bias           [1]                    0.1362   0.0000   0.1362   0.1362
+
+--- Valores FINALES de los pesos del DISCRIMINADOR (después de entrenar) ---
+Parámetro                   Forma                   Media    Desv.      Mín      Máx
+capa1_conv.weight           [64, 1, 4, 4]          0.0006   0.0222  -0.0715   0.0917
+capa1_conv.bias             [64]                  -0.0048   0.0213  -0.0415   0.0272
+capa2_conv.weight           [128, 64, 4, 4]       -0.0012   0.0243  -0.1367   0.1434
+capa2_batchnorm.weight      [128]                  1.0570   0.0322   0.9697   1.1586
+capa2_batchnorm.bias        [128]                  0.0154   0.0319  -0.0571   0.1514
+capa3_lineal.weight         [1, 6272]              0.0016   0.0444  -0.1868   0.2355
+capa3_lineal.bias           [1]                    0.0004   0.0000   0.0004   0.0004
+
+======================================================================
+RESUMEN FINAL
+======================================================================
+Categoría usada                    : 'cat' (Google Quick Draw)
+Parámetros de la red Generadora    : 771,969
+Parámetros de la red Discriminadora: 138,689
+Pérdida D / Pérdida G (última época): 0.0640 / 4.2450
+D(x) / D(G(z)) (última época)       : 0.970 / 0.030
+D promedio en reales / generados    : 0.814 / 0.058
