@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GAN Quick Draw</title>
+<meta name="description" content="GAN entrenada con dibujos de gatos de Google Quick, Draw!: parámetros de la red Generadora y la Discriminadora, funciones de pérdida, código, valores y resultado.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23000'/%3E%3Cpath d='M14 50 Q10 30 16 14 L26 24 Q32 22 38 24 L48 14 Q54 30 50 50 Q32 58 14 50Z' fill='none' stroke='%23f5f5f7' stroke-width='4' stroke-linejoin='round'/%3E%3Ccircle cx='25' cy='36' r='3' fill='%232997ff'/%3E%3Ccircle cx='39' cy='36' r='3' fill='%23ff9f0a'/%3E%3C/svg%3E">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#000;--bg2:#1d1d1f;--surface:#161617;--text:#f5f5f7;--muted:#86868b;--blue:#2997ff;--blue-btn:#0071e3;
+--g:#2997ff;--d:#ff9f0a;--line:#2c2c2e;--cell:#0b0b0c;
+--font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;
+--mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+--serif:ui-serif,"New York",Georgia,"Times New Roman",serif}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;overflow-x:hidden;min-width:900px}
+h1,h2,h3,p{margin:0}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.txt-g{color:var(--g)}.txt-d{color:var(--d)}
+
+/* Navegación */
+nav{position:fixed;inset:0 0 auto;z-index:50;height:48px;padding:env(safe-area-inset-top,0px) 32px 0;display:flex;align-items:center;justify-content:space-between;background:rgba(22,22,23,.72);backdrop-filter:saturate(180%) blur(20px);font-size:13px;color:#d2d2d7}
+nav b{color:var(--text);font-weight:600;font-size:15px}
+nav b i{font-style:normal;color:var(--g)}nav b em{font-style:normal;color:var(--d)}
+nav div{display:flex;gap:28px}
+nav a:hover{color:#fff}
+
+/* Fondos de color de las tarjetas */
+.ph{position:absolute;inset:0}
+.ph.a{background:radial-gradient(120% 90% at 70% 20%,#3a7bd5 0,#1b2a49 45%,#050810 100%)}
+.ph.b{background:radial-gradient(110% 90% at 20% 30%,#f2994a 0,#7a2e4d 45%,#0a0510 100%)}
+.ph.c{background:radial-gradient(110% 90% at 80% 70%,#43cea2 0,#185a73 45%,#03090c 100%)}
+.ph.d{background:radial-gradient(110% 90% at 30% 80%,#a18cd1 0,#41295a 45%,#060310 100%)}
+
+/* Hero: la imagen crece hasta ocupar toda la pantalla */
+.hero{height:230vh;position:relative}
+.stick{position:sticky;top:0;height:100vh;overflow:hidden}
+.hero .media{position:absolute;inset:0;overflow:hidden;will-change:clip-path;clip-path:inset(14% 20% 14% 20% round 28px);background:#050506}
+.hero .media .muro{transform:scale(1.2)}
+.hero .copy{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 24px;will-change:transform,opacity}
+.hero h1{font-size:clamp(56px,9vw,120px);font-weight:700;letter-spacing:-.04em;line-height:1}
+.hero p{font-size:clamp(20px,2.2vw,28px);color:#d2d2d7;margin:18px 0 0;max-width:720px;line-height:1.3}
+.hero p.eyebrow{font-size:17px;font-weight:600;color:#d2d2d7;margin:0 0 18px;letter-spacing:.01em}
+.hero p.eyebrow b{color:var(--text)}
+.hero .reveal2{position:absolute;bottom:12vh;left:0;right:0;text-align:center;font-size:clamp(28px,4vw,56px);font-weight:600;letter-spacing:-.03em;opacity:0;will-change:opacity,transform;text-shadow:0 2px 24px #000,0 0 60px #000}
+.hero .reveal2 small{display:block;font-size:19px;font-weight:400;letter-spacing:0;color:#d2d2d7;margin-top:12px}
+.hero .dim{position:absolute;inset:0;pointer-events:none;background:radial-gradient(62% 58% at 50% 50%,rgba(0,0,0,.9) 0,rgba(0,0,0,.66) 62%,rgba(0,0,0,.42) 100%)}
+.muro{position:absolute;inset:0;display:grid;grid-template-columns:repeat(var(--cols,12),1fr);align-content:start}
+.muro canvas{display:block;width:100%;aspect-ratio:1;opacity:0;transition:opacity .9s ease}
+.muro canvas.on{opacity:.92}
+
+/* Escenas: el panel de texto sube desde abajo y cubre la imagen */
+.scene{height:240vh;position:relative}
+.scene .media{position:absolute;inset:0;will-change:transform;background:#000;overflow:hidden}
+.scene .title{position:absolute;left:8vw;top:18vh;font-size:clamp(44px,5.6vw,84px);font-weight:700;letter-spacing:-.035em;line-height:1.02;max-width:6.6em;will-change:transform,opacity}
+.kicker{display:block;font-size:19px;font-weight:600;letter-spacing:0;margin-bottom:16px;color:#d2d2d7}
+.scene .panel{position:absolute;left:0;right:0;bottom:0;height:62vh;background:var(--bg);border-radius:32px 32px 0 0;padding:6vh 8vw;display:grid;grid-template-columns:1fr 1fr;gap:6vw;will-change:transform;box-shadow:0 -40px 80px rgba(0,0,0,.6)}
+.scene h2{font-size:clamp(28px,3.4vw,48px);font-weight:700;letter-spacing:-.03em;line-height:1.08}
+.scene .panel p{font-size:21px;line-height:1.45;color:var(--muted)}
+.scene .panel p b{color:var(--text);font-weight:600}
+.scene .stats{display:flex;gap:40px;margin-top:28px}
+.stat strong{display:block;font-size:56px;font-weight:700;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.stat span{font-size:14px;color:var(--muted)}
+.brillo{position:absolute;inset:0}
+.brillo.g{background:radial-gradient(55% 60% at 74% 38%,rgba(41,151,255,.24),transparent 72%)}
+.brillo.d{background:radial-gradient(55% 60% at 74% 38%,rgba(255,159,10,.2),transparent 72%)}
+
+/* Visuales en vivo de las escenas (medidas en vw: el zoom de entrada x1.12 no debe sacarlas de pantalla) */
+.visual{position:absolute;left:51vw;right:5vw;top:15vh;height:52vh;display:flex;align-items:center;justify-content:center;gap:.9vw}
+.dib{display:block;background:var(--cell);border-radius:18px;box-shadow:inset 0 0 0 1px #232325}
+.etq{font-weight:600}.etq.g{color:var(--g)}.etq.d{color:var(--d)}
+.red figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:12px}
+.red figcaption{font-size:14px;font-weight:600;text-align:center;white-space:nowrap}
+.red figcaption small{display:block;font-size:12px;font-weight:400;color:var(--muted);margin-top:3px}
+.red .fl{font-style:normal;color:#6e6e73;font-size:18px;margin-bottom:34px}
+.zbar{width:5.5vw;height:8vw;overflow:visible}
+.zbar rect{fill:var(--g)}
+.zbar line{stroke:#48484a;stroke-width:.6}
+.mapas{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;width:7.6vw}
+.mapas canvas{display:block;width:100%;aspect-ratio:1;border-radius:3px;background:var(--cell)}
+.red .salida{width:9vw;height:9vw}
+.medidor{width:8vw}
+.medidor .pista{position:relative;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--g),#3a3a3c 50%,var(--d))}
+.medidor .umbral{position:absolute;left:50%;top:-5px;bottom:-5px;width:1px;background:#f5f5f7;opacity:.5}
+.medidor .marca{position:absolute;top:50%;left:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px #000,0 2px 10px rgba(0,0,0,.6);transition:left .6s cubic-bezier(.16,1,.3,1)}
+.medidor .ejes{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:8px}
+.veredicto{font-size:32px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;text-align:center;margin-top:14px}
+.veredicto small{display:block;font-size:14px;font-weight:600;letter-spacing:0;margin-top:2px}
+
+/* Escena de épocas: el scroll recorre el entrenamiento */
+.escena-epocas .title{top:47vh}
+.tira{position:absolute;left:0;right:0;top:calc(48px + 7vh);display:flex;flex-direction:column;align-items:center}
+.tira .celdas{display:grid;grid-template-columns:repeat(12,min(calc((80vw - 110px) / 12),11.5vh));gap:10px}
+.tira canvas{display:block;width:100%;aspect-ratio:1;border-radius:14px}
+.tira .pie{width:min(80vw,calc(12 * 11.5vh + 110px));display:flex;justify-content:space-between;margin-top:12px;font-size:15px;color:var(--muted)}
+.tira .pie b{color:var(--text);font-variant-numeric:tabular-nums}
+.barra-ep{height:3px;background:#2c2c2e;border-radius:2px;width:min(80vw,calc(12 * 11.5vh + 110px));margin-top:10px;overflow:hidden}
+.barra-ep i{display:block;height:100%;width:4%;background:var(--text);border-radius:2px}
+
+/* Secciones de contenido */
+.mech,.uni,.gal{padding:18vh 8vw}
+.mech{background:var(--bg2)}.uni{background:var(--bg)}.gal{background:var(--bg2)}
+.mech h2,.uni h2,.gal h2{font-size:clamp(40px,5.5vw,80px);font-weight:700;letter-spacing:-.04em;line-height:1.04;max-width:13em}
+.mech>p,.uni>p,.gal>p{font-size:21px;color:var(--muted);margin-top:18px;max-width:760px;line-height:1.4}
+.mech>p b,.uni>p b,.gal>p b{color:var(--text);font-weight:600}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:8vh}
+.caja{background:var(--surface);border-radius:28px;padding:36px}
+.mech .caja{background:#111112}
+.caja h3{font-size:26px;font-weight:700;letter-spacing:-.02em}
+.caja p.sub{font-size:15px;color:var(--muted);margin-top:6px;line-height:1.45}
+.caja p.sub b{color:var(--text)}
+
+/* Tablas */
+.tabla{width:100%;border-collapse:collapse;font-size:14px;margin-top:18px}
+.tabla th,.tabla td{text-align:left;padding:9px 8px;border-top:1px solid var(--line);vertical-align:top}
+.tabla thead th{border-top:0;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+.tabla .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tabla tbody th{font-weight:400;color:var(--muted)}
+.tabla tfoot td{font-weight:700;font-size:15px;border-top:1px solid #48484a}
+.tabla code{font-family:var(--mono);font-size:12.5px;color:#d2d2d7}
+.tabla .t{color:var(--muted)}
+.lista{margin:18px 0 0;padding:0;list-style:none}
+.lista li{font-size:15px;color:#d2d2d7;line-height:1.45;padding:10px 0;border-top:1px solid var(--line)}
+.lista b{color:var(--text)}
+.comunes{margin-top:20px}
+.comunes .tabla{margin-top:10px}
+
+/* Pérdidas */
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:8vh}
+.card{background:var(--surface);border-radius:28px;padding:32px;min-height:300px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden}
+.card .ph{opacity:.55}
+.card>*:not(.ph){position:relative}
+.card strong{font-size:30px;font-weight:700;letter-spacing:-.03em}
+.card p{font-size:16px;color:#d2d2d7;margin-top:8px;line-height:1.35}
+.card .f{font-family:var(--serif);font-size:21px;line-height:1.45;color:#fff;margin:14px 0 6px}
+.card code{font-family:var(--mono);font-size:13px;color:#d2d2d7;background:rgba(0,0,0,.35);padding:4px 8px;border-radius:8px;display:inline-block;margin-top:10px}
+.f i{font-style:italic}.f sub{font-size:.65em}
+
+/* Gráficas */
+.graf-caja h4{margin:0;font-size:19px;font-weight:600}
+.leyenda{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);margin:10px 0 6px}
+.leyenda span{display:inline-flex;align-items:center;gap:8px}
+.leyenda i{display:inline-block;width:18px;height:0;border-top:2px solid}
+.leyenda i.g{border-color:var(--g)}.leyenda i.d{border-color:var(--d)}.leyenda i.pt{border-top-style:dashed}
+.graf{position:relative;height:290px}
+.graf svg{display:block;width:100%;height:100%;overflow:visible}
+.graf .rej{stroke:#2c2c2e;stroke-width:1}
+.graf .eje{fill:#86868b;font-size:12px;font-family:var(--font)}
+.graf .ref{stroke:#8e8e93;stroke-width:1.5;stroke-dasharray:3 4}
+.graf .ref-t{fill:#a1a1a6;font-size:12px}
+.graf .s{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.graf .s.g{stroke:var(--g)}.graf .s.d{stroke:var(--d)}.graf .s.pt{stroke-dasharray:6 5}
+.graf .pto{stroke:#000;stroke-width:2}
+.graf .pto.g{fill:var(--g)}.graf .pto.d{fill:var(--d)}
+.graf .fin{fill:#d2d2d7;font-size:12px;font-variant-numeric:tabular-nums}
+.graf .cruz{stroke:#f5f5f7;stroke-width:1;opacity:.4}
+.nota{font-size:15px;color:var(--muted);line-height:1.5;margin-top:20px;max-width:900px}
+.nota b{color:var(--text)}
+.tooltip{position:fixed;z-index:60;pointer-events:none;background:rgba(29,29,31,.94);backdrop-filter:blur(12px);border-radius:12px;padding:10px 14px;font-size:13px;box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 0 0 1px #3a3a3c;min-width:150px}
+.tooltip b{display:block;margin-bottom:6px;font-size:13px}
+.tooltip div{display:flex;justify-content:space-between;gap:16px;color:#d2d2d7;margin-top:3px}
+.tooltip div span{display:inline-flex;align-items:center;gap:7px}
+.tooltip div i{width:8px;height:8px;border-radius:50%}
+.tooltip div em{font-style:normal;font-variant-numeric:tabular-nums;color:#fff}
+
+/* Código */
+.ubic{width:100%;border-collapse:collapse;margin-top:7vh;font-size:16px}
+.ubic td{padding:16px 10px;border-top:1px solid #333}
+.ubic tr:last-child td{border-bottom:1px solid #333}
+.ubic td:last-child{text-align:right;white-space:nowrap}
+.ubic a{color:var(--blue)}
+.ubic a:hover{text-decoration:underline}
+.ubic code{font-family:var(--mono);font-size:14px;color:#d2d2d7}
+.visor{margin-top:6vh}
+.segmento{display:flex;margin-bottom:22px}
+.segmento div{display:inline-flex;background:#2c2c2e;border-radius:980px;padding:4px}
+.segmento button{font:inherit;font-size:14px;border:0;background:none;color:#d2d2d7;padding:8px 18px;border-radius:980px;cursor:pointer}
+.segmento button[aria-selected=true]{background:#48484a;color:#fff}
+#visor{scroll-margin-top:72px}
+.visor pre{position:relative;margin:0;background:#0b0b0c;border-radius:24px;padding:18px 0;overflow:auto;height:62vh;font:14px/1.65 var(--mono);color:#d2d2d7;box-shadow:inset 0 0 0 1px #2a2a2c;tab-size:4}
+.visor code{display:block;min-width:max-content}
+.ln{display:block;padding:0 28px 0 0;white-space:pre}
+.ln i{display:inline-block;width:4.2em;padding-right:1.4em;text-align:right;color:#4a4a4f;font-style:normal;user-select:none}
+.ln.sel{background:rgba(41,151,255,.15)}
+.ln.sel i{color:var(--blue);box-shadow:inset -3px 0 0 var(--blue)}
+.visor .cab{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:14px;color:var(--muted)}
+.visor .cab a{color:var(--blue)}
+.visor .cab b{color:var(--text);font-weight:600}
+.ubic a{cursor:pointer}
+.tk-c{color:#7f8c98}.tk-s{color:#ff8170}.tk-k{color:#ff7ab2;font-weight:600}.tk-n{color:#d9c97c}.tk-f{color:#67b7a4}.tk-t{color:#5dd8ff}
+
+/* Valores */
+details{margin-top:20px;border-top:1px solid #333;border-bottom:1px solid #333;padding:20px 0}
+summary{font-size:19px;font-weight:600;cursor:pointer;list-style:none;display:flex;justify-content:space-between}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--muted);transition:transform .3s}
+details[open] summary::after{transform:rotate(45deg)}
+
+/* Resultado */
+.rejilla{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:20px}
+.rejilla canvas{display:block;width:100%;aspect-ratio:1;border-radius:14px}
+.resumen{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:20px}
+.resumen .caja{padding:28px}
+.resumen strong{display:block;font-size:40px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.resumen span{font-size:14px;color:var(--muted)}
+
+footer{padding:40px 8vw;font-size:13px;color:var(--muted);background:var(--bg);display:flex;justify-content:space-between;gap:40px;border-top:1px solid #1d1d1f}
+footer a{color:#d2d2d7}
+footer a:hover{color:#fff}
+
+/* Aparición simple al entrar en pantalla (solo en elementos que lo piden) */
+.rv{opacity:0;transform:translateY(32px);transition:opacity 1.1s cubic-bezier(.16,1,.3,1),transform 1.1s cubic-bezier(.16,1,.3,1)}
+.rv.in{opacity:1;transform:none}
+/* Texto palabra por palabra: cada palabra sube desde una máscara */
+.rv.sp{opacity:1;transform:none}
+.w{display:inline-block}
+.w>span{display:inline-block}
+.sp .w{overflow:hidden;vertical-align:top;padding-bottom:.14em;margin-bottom:-.14em}
+.sp .w>span{transform:translateY(108%);transition:transform 1.1s cubic-bezier(.16,1,.3,1)}
+.sp.in .w>span{transform:none}
+.panel .w>span{will-change:opacity,transform}
+
+@media (prefers-reduced-motion:reduce){
+  .rv{opacity:1;transform:none;transition:none}
+  .sp .w>span{transform:none;transition:none}
+  .muro canvas,.medidor .marca{transition:none}
+}
+</style>
+</head>
+<body>
+<nav>
+  <b><i>G</i> vs <em>D</em> · GAN Quick Draw</b>
+  <div><a href="#generadora">1 Generadora</a><a href="#discriminadora">2 Discriminadora</a><a href="#parametros">Parámetros</a><a href="#perdidas">3 Pérdidas</a><a href="#codigo">4 Código</a><a href="#entrenamiento">5 Valores</a><a href="#resultado">6 Resultado</a></div>
+  <span style="color:#86868b">Categoría: <b style="font-size:13px">cat</b></span>
+</nav>
+
+<!-- Portada: muro de gatos dibujados por la red Generadora -->
+<header class="hero" id="top">
+  <div class="stick">
+    <div class="media"><div class="muro" id="muro" aria-hidden="true"></div><div class="dim" id="dim"></div></div>
+    <div class="copy">
+      <p class="eyebrow">Red Generativa Adversaria (GAN) · Categoría usada: <b>cat</b> (gato)</p>
+      <h1>Gatos que nunca existieron.</h1>
+      <p>Una red Generadora aprendió a dibujar gatos con 30 000 bocetos de Google Quick, Draw!, y una red Discriminadora aprendió a descubrir cuáles son falsos.</p>
+    </div>
+    <div class="reveal2">Categoría usada: cat (gato).<small>Todos los dibujos de fondo los hizo la red Generadora entrenada.</small></div>
+  </div>
+</header>
+
+<!-- Red Generadora -->
+<section class="scene" id="generadora" data-scene>
+  <div class="stick">
+    <div class="media"><div class="brillo g"></div>
+      <div class="visual red">
+        <figure><svg class="zbar" id="vg-z" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Valores del ruido z"></svg><figcaption>Ruido z<small>100 números</small></figcaption></figure>
+        <i class="fl">→</i>
+        <figure><div class="mapas" id="vg-c1"></div><figcaption>Capa 1<small>128 × 7 × 7</small></figcaption></figure>
+        <i class="fl">→</i>
+        <figure><div class="mapas" id="vg-c2"></div><figcaption>Capa 2<small>64 × 14 × 14</small></figcaption></figure>
+        <i class="fl">→</i>
+        <figure><canvas class="dib salida" id="vg-out" width="224" height="224" aria-label="Dibujo generado"></canvas><figcaption>Salida<small>1 × 28 × 28</small></figcaption></figure>
+      </div>
+    </div>
+    <h2 class="title"><span class="kicker txt-g">1 · Red neuronal Generadora (G)</span>Convierte ruido en un dibujo.</h2>
+    <div class="panel">
+      <div><h2>771 969 parámetros que aprendieron a dibujar.</h2></div>
+      <div><p><b>Capa 1:</b> una capa lineal pasa los 100 números de ruido a 6272 valores, que se ordenan como 128 mapas de 7×7. <b>Capas 2 y 3:</b> dos convoluciones transpuestas (kernel 4, stride 2) duplican el tamaño a 14×14 y luego a 28×28. Usa BatchNorm y ReLU por dentro, y <b>Tanh</b> a la salida para dejar los píxeles entre −1 y 1.</p>
+        <div class="stats"><div class="stat"><strong data-count="771969">0</strong><span>parámetros</span></div><div class="stat"><strong data-count="100">0</strong><span>números de ruido z</span></div><div class="stat"><strong data-count="3">0</strong><span>capas con pesos</span></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Red Discriminadora -->
+<section class="scene" id="discriminadora" data-scene>
+  <div class="stick">
+    <div class="media"><div class="brillo d"></div>
+      <div class="visual red">
+        <figure><canvas class="dib salida" id="vd-in" width="224" height="224" aria-label="Dibujo de entrada"></canvas><figcaption id="vd-tipo">Entrada<small>1 × 28 × 28</small></figcaption></figure>
+        <i class="fl">→</i>
+        <figure><div class="mapas" id="vd-c1"></div><figcaption>Capa 1<small>64 × 14 × 14</small></figcaption></figure>
+        <i class="fl">→</i>
+        <figure><div class="mapas" id="vd-c2"></div><figcaption>Capa 2<small>128 × 7 × 7</small></figcaption></figure>
+        <i class="fl">→</i>
+        <figure><div class="medidor" id="vd-medidor"><div class="pista"><i class="umbral"></i><i class="marca"></i></div><div class="ejes"><span>falso</span><span>real</span></div></div><div class="veredicto" id="vd-prob">–<small>&nbsp;</small></div><figcaption>Salida<small>P(real)</small></figcaption></figure>
+      </div>
+    </div>
+    <h2 class="title"><span class="kicker txt-d">2 · Red neuronal Discriminadora (D)</span>Mira un dibujo y decide si es real.</h2>
+    <div class="panel">
+      <div><h2>138 689 parámetros para detectar falsificaciones.</h2></div>
+      <div><p><b>Capas 1 y 2:</b> dos convoluciones (kernel 4, stride 2) con 64 y 128 filtros buscan trazos, orejas y bigotes, y reducen la imagen de 28×28 a 14×14 y luego a 7×7. Usan <b>LeakyReLU(0.2)</b> para que el gradiente no se apague. <b>Capa 3:</b> una capa lineal y una Sigmoid dan la probabilidad de que el dibujo sea real.</p>
+        <div class="stats"><div class="stat"><strong data-count="138689">0</strong><span>parámetros</span></div><div class="stat"><strong data-count="128">0</strong><span>filtros en la capa 2</span></div><div class="stat"><strong data-count="1">0</strong><span>número de salida</span></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Parámetros de las dos redes -->
+<section class="mech" id="parametros">
+  <h2 class="rv"><span class="kicker">1 y 2 · Parámetros de las dos redes</span>Los parámetros de cada red.</h2>
+  <p class="rv">Cada capa, la forma de lo que entrega y cuántos <b>parámetros</b> (pesos y sesgos) aprende. Los valores salen del resumen que imprime <b>gan_quickdraw.py</b>.</p>
+  <div class="dos">
+    <div class="caja rv">
+      <h3 class="txt-g">Red Generadora (G)</h3>
+      <p class="sub">Entrada: ruido z de 100 números · Salida: imagen de 1×28×28</p>
+      <table class="tabla">
+        <thead><tr><th>Capa</th><th>Tipo</th><th>Salida</th><th class="n">Parámetros</th></tr></thead>
+        <tbody>
+          <tr><td><code>capa1_lineal</code></td><td class="t">Linear 100→6272</td><td class="t">6272</td><td class="n">627 200</td></tr>
+          <tr><td><code>capa1_batchnorm</code></td><td class="t">BatchNorm1d</td><td class="t">6272</td><td class="n">12 544</td></tr>
+          <tr><td><code>capa1_relu</code></td><td class="t">ReLU</td><td class="t">6272</td><td class="n">0</td></tr>
+          <tr><td><code>redimensionar</code></td><td class="t">Unflatten</td><td class="t">128×7×7</td><td class="n">0</td></tr>
+          <tr><td><code>capa2_deconv</code></td><td class="t">ConvTranspose2d 128→64</td><td class="t">64×14×14</td><td class="n">131 072</td></tr>
+          <tr><td><code>capa2_batchnorm</code></td><td class="t">BatchNorm2d</td><td class="t">64×14×14</td><td class="n">128</td></tr>
+          <tr><td><code>capa2_relu</code></td><td class="t">ReLU</td><td class="t">64×14×14</td><td class="n">0</td></tr>
+          <tr><td><code>capa3_deconv</code></td><td class="t">ConvTranspose2d 64→1</td><td class="t">1×28×28</td><td class="n">1 025</td></tr>
+          <tr><td><code>salida_tanh</code></td><td class="t">Tanh</td><td class="t">1×28×28</td><td class="n">0</td></tr>
+        </tbody>
+        <tfoot><tr><td colspan="3">Total</td><td class="n txt-g">771 969</td></tr></tfoot>
+      </table>
+      <ul class="lista">
+        <li><b>Dimensión latente = 100:</b> tamaño del ruido z. Cada z distinto da un gato distinto.</li>
+        <li><b>ConvTranspose2d (kernel 4, stride 2, padding 1):</b> duplica alto y ancho (7 → 14 → 28).</li>
+        <li><b>BatchNorm:</b> normaliza cada lote y estabiliza el entrenamiento.</li>
+        <li><b>ReLU</b> en capas ocultas y <b>Tanh</b> en la salida: píxeles entre −1 y 1, como los datos reales.</li>
+        <li><b>Adam, lr = 0.0002, β₁ = 0.5:</b> valores recomendados por DCGAN.</li>
+      </ul>
+    </div>
+    <div class="caja rv" style="transition-delay:.1s">
+      <h3 class="txt-d">Red Discriminadora (D)</h3>
+      <p class="sub">Entrada: imagen de 1×28×28 · Salida: probabilidad de que sea real</p>
+      <table class="tabla">
+        <thead><tr><th>Capa</th><th>Tipo</th><th>Salida</th><th class="n">Parámetros</th></tr></thead>
+        <tbody>
+          <tr><td><code>capa1_conv</code></td><td class="t">Conv2d 1→64</td><td class="t">64×14×14</td><td class="n">1 088</td></tr>
+          <tr><td><code>capa1_leakyrelu</code></td><td class="t">LeakyReLU(0.2)</td><td class="t">64×14×14</td><td class="n">0</td></tr>
+          <tr><td><code>capa2_conv</code></td><td class="t">Conv2d 64→128</td><td class="t">128×7×7</td><td class="n">131 072</td></tr>
+          <tr><td><code>capa2_batchnorm</code></td><td class="t">BatchNorm2d</td><td class="t">128×7×7</td><td class="n">256</td></tr>
+          <tr><td><code>capa2_leakyrelu</code></td><td class="t">LeakyReLU(0.2)</td><td class="t">128×7×7</td><td class="n">0</td></tr>
+          <tr><td><code>aplanar</code></td><td class="t">Flatten</td><td class="t">6272</td><td class="n">0</td></tr>
+          <tr><td><code>capa3_lineal</code></td><td class="t">Linear 6272→1</td><td class="t">1</td><td class="n">6 273</td></tr>
+          <tr><td><code>salida_sigmoid</code></td><td class="t">Sigmoid</td><td class="t">1</td><td class="n">0</td></tr>
+        </tbody>
+        <tfoot><tr><td colspan="3">Total</td><td class="n txt-d">138 689</td></tr></tfoot>
+      </table>
+      <ul class="lista">
+        <li><b>Conv2d (kernel 4, stride 2, padding 1):</b> 64 y 128 filtros; reduce a la mitad (28 → 14 → 7).</li>
+        <li><b>LeakyReLU 0.2:</b> deja pasar el 20 % de los negativos para que el gradiente no se apague.</li>
+        <li><b>Sin BatchNorm en la primera capa:</b> recomendación de DCGAN.</li>
+        <li><b>Sigmoid</b> en la salida: 1 = real, 0 = falso.</li>
+        <li><b>Adam, lr = 0.0002, β₁ = 0.5:</b> su propio optimizador, separado del de G.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="caja comunes rv">
+    <h3>Parámetros del entrenamiento (comunes a las dos redes)</h3>
+    <table class="tabla"><tbody><tr>
+      <th>Categoría</th><td><b>cat</b></td><th>Imágenes</th><td>30 000 de 28×28</td><th>Lote</th><td>128</td><th>Épocas</th><td>25</td><th>Pesos iniciales</th><td>Normal(0, 0.02)</td><th>Semilla</th><td>42</td>
+    </tr></tbody></table>
+  </div>
+</section>
+
+<!-- Funciones de pérdida -->
+<section class="uni" id="perdidas">
+  <h2 class="rv"><span class="kicker">3 · Funciones de pérdida</span>Las funciones de pérdida.</h2>
+  <p class="rv">Cada red tiene su propia pérdida. Las dos salen del juego <b>minimax</b> del artículo original de Goodfellow (2014), el mismo que presenta el curso de Google, y se calculan con <b>entropía cruzada binaria (BCE)</b>.</p>
+  <div class="grid4">
+    <div class="card rv"><div class="ph d"></div><strong>Minimax</strong><p class="f">min<sub><i>G</i></sub> max<sub><i>D</i></sub> 𝔼[log <i>D</i>(<i>x</i>)] + 𝔼[log(1 − <i>D</i>(<i>G</i>(<i>z</i>)))]</p><p>D quiere D(x) = 1 y D(G(z)) = 0. G quiere D(G(z)) = 1.</p></div>
+    <div class="card rv" style="transition-delay:.1s"><div class="ph b"></div><strong>Pérdida de D</strong><p class="f"><i>L</i><sub>D</sub> = −[log <i>D</i>(<i>x</i>) + log(1 − <i>D</i>(<i>G</i>(<i>z</i>)))]</p><p>Baja cuando D acierta con los reales y con los falsos.</p><code>BCE(D(x),1) + BCE(D(G(z)),0)</code></div>
+    <div class="card rv" style="transition-delay:.2s"><div class="ph a"></div><strong>Pérdida de G</strong><p class="f"><i>L</i><sub>G</sub> = −log <i>D</i>(<i>G</i>(<i>z</i>))</p><p>Versión «no saturante» que recomienda Google: G quiere que D crea que sus dibujos son reales.</p><code>BCE(D(G(z)),1)</code></div>
+    <div class="card rv" style="transition-delay:.3s"><div class="ph c"></div><strong>BCE</strong><p class="f">−[<i>y</i>·log <i>p</i> + (1 − <i>y</i>)·log(1 − <i>p</i>)]</p><p>La base de las dos pérdidas. <i>y</i> = 1 es real, <i>y</i> = 0 es falso.</p></div>
+  </div>
+  <div class="dos" style="margin-top:20px">
+    <div class="caja graf-caja rv"><h4 class="txt-d">Pérdida del Discriminador</h4><div class="leyenda"><span><i class="d"></i>Reales: −log D(x)</span><span><i class="d pt"></i>Falsos: −log(1 − D(G(z)))</span></div><div class="graf" id="graf-ld"></div></div>
+    <div class="caja graf-caja rv" style="transition-delay:.1s"><h4 class="txt-g">Pérdida del Generador</h4><div class="leyenda"><span><i class="g"></i>Usada: −log D(G(z))</span><span><i class="g pt"></i>Original: log(1 − D(G(z)))</span></div><div class="graf" id="graf-lg"></div></div>
+  </div>
+  <p class="nota rv">El eje horizontal es la salida del discriminador. Al comenzar el entrenamiento D rechaza los dibujos falsos con facilidad (D(G(z)) cerca de 0); ahí la pérdida original del generador casi no tiene pendiente y G no aprendería. Por eso se usa la versión <b>no saturante</b>, que es muy inclinada justo en esa zona.</p>
+</section>
+
+<!-- Código -->
+<section class="mech" id="codigo">
+  <h2 class="rv"><span class="kicker">4 · Código comentado</span>Dónde se crea cada red en el código.</h2>
+  <p class="rv">Todo está en <b>gan_quickdraw.py</b>, comentado línea por línea. Cada red tiene un recuadro <b>«AQUÍ SE DEFINE»</b> en su clase y otro <b>«AQUÍ SE CREA»</b> donde se instancia. Haz clic en una línea para verla resaltada en el código.</p>
+  <table class="ubic rv">
+    <tbody>
+      <tr><td>Categoría usada: <code>CATEGORIA = "cat"</code></td><td>Sección 1</td><td><a href="#visor" data-desde="69" data-hasta="69">línea 69</a></td></tr>
+      <tr><td><b class="txt-g">Se define</b> la red Generadora: <code>class Generador</code></td><td>Sección 3</td><td><a href="#visor" data-desde="242" data-hasta="274">línea 246</a></td></tr>
+      <tr><td><b class="txt-d">Se define</b> la red Discriminadora: <code>class Discriminador</code></td><td>Sección 4</td><td><a href="#visor" data-desde="301" data-hasta="329">línea 305</a></td></tr>
+      <tr><td><b class="txt-g">Se crea</b> la red Generadora: <code>G = Generador(DIM_LATENTE)</code></td><td>Sección 5</td><td><a href="#visor" data-desde="355" data-hasta="359">línea 358</a></td></tr>
+      <tr><td><b class="txt-d">Se crea</b> la red Discriminadora: <code>D = Discriminador(PENDIENTE_LEAKY)</code></td><td>Sección 5</td><td><a href="#visor" data-desde="361" data-hasta="365">línea 364</a></td></tr>
+      <tr><td>Funciones de pérdida de D y de G</td><td>Sección 6</td><td><a href="#visor" data-desde="471" data-hasta="495">líneas 481 y 493</a></td></tr>
+    </tbody>
+  </table>
+  <div class="visor rv" id="visor">
+    <div class="segmento"><div role="tablist" aria-label="Bloque de código">
+      <button role="tab" aria-selected="true" data-desde="242" data-hasta="274">Red Generadora</button>
+      <button role="tab" aria-selected="false" data-desde="301" data-hasta="329">Red Discriminadora</button>
+      <button role="tab" aria-selected="false" data-desde="355" data-hasta="365">Creación de G y D</button>
+      <button role="tab" aria-selected="false" data-desde="471" data-hasta="495">Funciones de pérdida</button>
+    </div></div>
+    <div class="cab"><span>gan_quickdraw.py · <b id="cod-rango">líneas 242–274</b></span><a id="cod-github" target="_blank" rel="noopener" hidden>Abrir en GitHub ↗</a></div>
+    <pre id="cod-pre"><code id="cod-ver"></code></pre>
+  </div>
+</section>
+
+<!-- Valores: el scroll recorre las 25 épocas -->
+<section class="scene escena-epocas" id="entrenamiento" data-scene data-epocas>
+  <div class="stick">
+    <div class="media"><div class="brillo" style="background:radial-gradient(70% 45% at 50% 18%,rgba(255,255,255,.08),transparent 75%)"></div>
+      <div class="tira" aria-label="Dibujos del generador según la época">
+        <div class="celdas" id="tira-celdas"></div>
+        <div class="pie"><span>Mismo ruido z en cada época</span><span>Época <b id="tira-ep">1</b> de 25</span></div>
+        <div class="barra-ep"><i id="tira-barra"></i></div>
+      </div>
+    </div>
+    <h2 class="title"><span class="kicker">5 · Valores del generador y del discriminador</span>De manchas a gatos en 25 épocas.</h2>
+    <div class="panel">
+      <div><h2>Los valores de G y D en cada época.</h2></div>
+      <div><p><b>D(x)</b> es la probabilidad promedio que D da a los dibujos reales y <b>D(G(z))</b> la que da a los dibujos de G. En cada lote se entrena primero D y luego G, cada uno con su propio optimizador.</p>
+        <div class="stats"><div class="stat"><strong id="ep-num">1</strong><span>época</span></div><div class="stat"><strong id="ep-dx" class="txt-d">–</strong><span>D(x) · reales</span></div><div class="stat"><strong id="ep-dgz" class="txt-g">–</strong><span>D(G(z)) · falsos</span></div></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="uni" id="valores">
+  <h2 class="rv"><span class="kicker">5 · Valores del generador y del discriminador</span>Los valores, época por época.</h2>
+  <p class="rv">En cada época se guardan cuatro valores: las dos pérdidas, D(x) y D(G(z)). Pasa el mouse por las gráficas para ver cada época.</p>
+  <div class="dos">
+    <div class="caja graf-caja rv"><h4>Salida del discriminador</h4><div class="leyenda"><span><i class="d"></i>D(x): dibujos reales</span><span><i class="g"></i>D(G(z)): dibujos falsos</span></div><div class="graf" id="graf-salida"></div></div>
+    <div class="caja graf-caja rv" style="transition-delay:.1s"><h4>Funciones de pérdida</h4><div class="leyenda"><span><i class="d"></i>Pérdida D</span><span><i class="g"></i>Pérdida G</span></div><div class="graf" id="graf-perdidas"></div></div>
+  </div>
+  <div class="dos" style="margin-top:20px">
+    <div class="caja rv"><h3>Cómo leerlos</h3>
+      <ul class="lista">
+        <li>Con un generador perfecto, D(x) y D(G(z)) quedarían en <b>0.5</b> (línea punteada): D tendría que adivinar.</li>
+        <li>En la práctica <b>D va ganando</b>: en la época 25 da 0.97 a los reales y 0.03 a los falsos; su pérdida baja a 0.06 y la de G sube a 4.2. Es lo más común, porque clasificar es más fácil que dibujar.</li>
+        <li>Aun así G <b>sí aprendió</b>: sus dibujos son gatos reconocibles (ver el resultado).</li>
+      </ul>
+    </div>
+    <div class="caja rv" style="transition-delay:.1s"><h3>Pesos: antes y después</h3><p class="sub">Todos empiezan con media 0 y desviación 0.02. La que más cambia es la última capa de G, la que «pinta» el trazo.</p>
+      <table class="tabla"><thead><tr><th>Capa</th><th class="n">Desv. inicial</th><th class="n">Desv. final</th><th class="n">Rango final</th></tr></thead><tbody>
+        <tr><td><span class="txt-g">G</span> <code>capa1_lineal</code></td><td class="n">0.0200</td><td class="n">0.0266</td><td class="n">−0.124 a 0.121</td></tr>
+        <tr><td><span class="txt-g">G</span> <code>capa2_deconv</code></td><td class="n">0.0200</td><td class="n">0.0266</td><td class="n">−0.177 a 0.205</td></tr>
+        <tr><td><span class="txt-g">G</span> <code>capa3_deconv</code></td><td class="n">0.0191</td><td class="n"><b>0.1044</b></td><td class="n">−0.381 a 0.253</td></tr>
+        <tr><td><span class="txt-d">D</span> <code>capa1_conv</code></td><td class="n">0.0201</td><td class="n">0.0222</td><td class="n">−0.072 a 0.092</td></tr>
+        <tr><td><span class="txt-d">D</span> <code>capa2_conv</code></td><td class="n">0.0200</td><td class="n">0.0243</td><td class="n">−0.137 a 0.143</td></tr>
+        <tr><td><span class="txt-d">D</span> <code>capa3_lineal</code></td><td class="n">0.0200</td><td class="n">0.0444</td><td class="n">−0.187 a 0.236</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+  <details class="rv"><summary>Tabla completa de valores por época</summary>
+    <table class="tabla" id="tabla-epocas"><thead><tr><th>Época</th><th class="n">Pérdida D</th><th class="n">Pérdida G</th><th class="n">D(x)</th><th class="n">D(G(z))</th></tr></thead><tbody></tbody></table>
+  </details>
+</section>
+
+<!-- Resultado -->
+<section class="gal" id="resultado">
+  <h2 class="rv"><span class="kicker">6 · Resultado de la GAN</span>Categoría usada: cat (gato).</h2>
+  <p class="rv">Dibujos reales de la categoría <b>cat</b> de Quick Draw al lado de los que hizo la red Generadora al terminar el entrenamiento (época 25). Aprendió los rasgos de un gato: cabeza redonda, orejas en punta, ojos y bigotes.</p>
+  <div class="dos">
+    <div class="caja rv"><h3 class="txt-d">Reales · Quick Draw</h3><div class="rejilla" id="rej-reales"></div></div>
+    <div class="caja rv" style="transition-delay:.1s"><h3 class="txt-g">Generados · red Generadora</h3><div class="rejilla" id="rej-generados"></div></div>
+  </div>
+  <div class="resumen">
+    <div class="caja rv"><strong>cat</strong><span>categoría de Quick Draw (gato)</span></div>
+    <div class="caja rv" style="transition-delay:.08s"><strong class="txt-g">771 969</strong><span>parámetros de la red Generadora</span></div>
+    <div class="caja rv" style="transition-delay:.16s"><strong class="txt-d">138 689</strong><span>parámetros de la red Discriminadora</span></div>
+    <div class="caja rv" style="transition-delay:.24s"><strong>0.97 / 0.03</strong><span>D(x) / D(G(z)) en la época 25</span></div>
+  </div>
+</section>
+
+<footer><span>Proyecto académico · 2026 · GAN con PyTorch · Categoría usada: cat (gato)</span><span>Fuentes: <a href="https://developers.google.com/machine-learning/gan?hl=es-419" target="_blank" rel="noopener">Google ML · GAN</a> · <a href="https://poloclub.github.io/ganlab/" target="_blank" rel="noopener">GAN Lab</a> · <a href="https://quickdraw.withgoogle.com/data" target="_blank" rel="noopener">Quick, Draw! Dataset</a></span></footer>
+
+<div class="tooltip" id="tooltip" hidden></div>
+
+<script src="modelo/datos.js"></script>
+<script src="modelo/codigo.js"></script>
+<script src="js/red.js"></script>
+<script>
+/* =====================================================================
+   SISTEMA DE ANIMACIONES DE LA PLANTILLA (scroll-cinematic-landing)
+   ===================================================================== */
+(function(){
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var vh = function(){ return innerHeight; };
+  var clamp = function(v,a,b){ return Math.min(b,Math.max(a,v)); };
+  // Curva casi lineal en los extremos: al invertir el scroll el movimiento responde de inmediato
+  var ease = function(t){ var s = t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2; return t + (s - t) * 0.4; };
+  var easeOut = function(t){ return 1 - Math.pow(1 - t, 4); };
+  var miles = function(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); };
+  // Divide el texto en palabras (conserva etiquetas internas como <b>)
+  function split(el){
+    var out = [];
+    (function walk(n){
+      [].slice.call(n.childNodes).forEach(function(c){
+        if(c.nodeType === 3){
+          var frag = document.createDocumentFragment();
+          c.textContent.split(/(\s+)/).forEach(function(tok){
+            if(!tok) return;
+            if(/^\s+$/.test(tok)){ frag.appendChild(document.createTextNode(' ')); return; }
+            var w = document.createElement('span'), i = document.createElement('span');
+            w.className = 'w'; i.textContent = tok; w.appendChild(i); frag.appendChild(w); out.push(i);
+          });
+          n.replaceChild(frag, c);
+        } else if(c.nodeType === 1){ walk(c); }
+      });
+    })(el);
+    return out;
+  }
+  // progreso 0..1 de una sección alta con contenido "sticky"
+  var cur = scrollY; // posición suavizada: el movimiento sigue al scroll con inercia
+  function prog(el){
+    var r = el.getBoundingClientRect();
+    var top = r.top + (scrollY - cur);
+    return clamp(-top / (r.height - vh()), 0, 1);
+  }
+  var hero = document.querySelector('.hero');
+  var hMedia = hero.querySelector('.media'), hImg = hMedia.querySelector('.muro'), hDim = hMedia.querySelector('.dim');
+  var hCopy = hero.querySelector('.copy'), hText = hero.querySelector('.reveal2');
+  var scenes = [].slice.call(document.querySelectorAll('[data-scene]'));
+  scenes.forEach(function(s){
+    s._w = [];
+    [].forEach.call(s.querySelectorAll('.panel h2, .panel p'), function(e){ s._w = s._w.concat(split(e)); });
+  });
+
+  function frame(){
+    // Hero: el muro de gatos se expande y el texto se desvanece hacia arriba
+    var p = reduce ? 1 : prog(hero);
+    var e = ease(clamp(p / 0.55, 0, 1));
+    var iy = 14 * (1 - e), ix = 20 * (1 - e), rd = 28 * (1 - e);
+    hMedia.style.clipPath = 'inset(' + iy + '% ' + ix + '% ' + iy + '% ' + ix + '% round ' + rd + 'px)';
+    hImg.style.transform = 'scale(' + (1.2 - 0.2 * e) + ')';
+    var fo = clamp(p / 0.3, 0, 1);
+    hCopy.style.opacity = 1 - fo;
+    hCopy.style.transform = 'translateY(' + (-60 * fo) + 'px) scale(' + (1 - 0.06 * fo) + ')';
+    hDim.style.opacity = 1 - 0.55 * fo;
+    var ti = clamp((p - 0.62) / 0.25, 0, 1);
+    hText.style.opacity = ti;
+    hText.style.transform = 'translateY(' + (40 * (1 - ti)) + 'px)';
+
+    // Escenas: el panel sube desde abajo y cubre la imagen
+    scenes.forEach(function(s){
+      var q = reduce ? 1 : prog(s);
+      var m = s.querySelector('.media'), t = s.querySelector('.title'), pn = s.querySelector('.panel');
+      m.style.transform = 'scale(' + (1.12 - 0.12 * ease(clamp(q / 0.4, 0, 1))) + ')';
+      var pe = ease(clamp((q - 0.08) / 0.5, 0, 1));
+      pn.style.transform = 'translateY(' + (100 * (1 - pe)) + '%)';
+      // El texto del panel se despliega palabra por palabra según el scroll
+      var N = s._w.length, rv = clamp((q - 0.3) / 0.55, 0, 1) * (N + 6);
+      s._w.forEach(function(w,k){ var o = clamp(rv - k, 0, 6) / 6; w.style.opacity = o; w.style.transform = 'translateY(' + ((1 - o) * 14) + 'px)'; });
+      // Escena de valores: el scroll recorre las 25 épocas (en lugar del ciclo día/noche)
+      if(s.hasAttribute('data-epocas') && window.mostrarEpoca){
+        window.mostrarEpoca(1 + Math.round(clamp((q - 0.04) / 0.82, 0, 1) * 24));
+      }
+      var tf = clamp((q - 0.25) / 0.35, 0, 1);
+      t.style.opacity = 1 - 0.85 * tf;
+      t.style.transform = 'translateY(' + (-50 * tf) + 'px)';
+    });
+  }
+  window.redibujarEscenas = frame;
+  var ticking = false;
+  function tick(){
+    var d = scrollY - cur;
+    if(reduce || Math.abs(d) < 0.3){ cur = scrollY; frame(); ticking = false; return; }
+    cur += d * 0.32;
+    frame();
+    requestAnimationFrame(tick);
+  }
+  function onScroll(){ if(!ticking){ ticking = true; requestAnimationFrame(tick); } }
+  addEventListener('scroll', onScroll, {passive:true});
+  addEventListener('resize', onScroll);
+  frame();
+
+  // Aparición de bloques y contadores al entrar en pantalla
+  // Se activa al entrar y se reinicia al salir, para que la animación se repita al volver
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(!en.isIntersecting){ en.target.classList.remove('in'); return; }
+      if(en.intersectionRatio >= .2) en.target.classList.add('in');
+    });
+  }, {threshold:[0,.2]});
+  [].forEach.call(document.querySelectorAll('.hero h1, .hero .copy p'), function(e){ e.classList.add('rv'); });
+  [].forEach.call(document.querySelectorAll('.mech>h2,.uni>h2,.gal>h2,.mech>p,.uni>p,.gal>p,.hero h1,.hero .copy p'), function(e){
+    var ws = split(e), st = Math.min(45, 700 / ws.length);
+    ws.forEach(function(w,k){ w.style.transitionDelay = (k * st) + 'ms'; });
+    e.classList.add('sp');
+  });
+  [].forEach.call(document.querySelectorAll('.rv'), function(n){ io.observe(n); });
+
+  var counted = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      var el = en.target, end = +el.dataset.count, t0 = null;
+      var run = el._run = (el._run || 0) + 1;
+      if(!en.isIntersecting){ el.textContent = reduce ? miles(end) : 0; return; }
+      if(reduce){ el.textContent = miles(end); return; }
+      (function step(ts){
+        if(run !== el._run) return;
+        if(t0 === null) t0 = ts;
+        var k = clamp((ts - t0) / 1400, 0, 1);
+        el.textContent = miles(Math.round(end * easeOut(k)));
+        if(k < 1) requestAnimationFrame(step);
+      })(performance.now());
+    });
+  }, {threshold:.6});
+  [].forEach.call(document.querySelectorAll('[data-count]'), function(n){ counted.observe(n); });
+})();
+</script>
+<script src="js/app.js"></script>
+</body>
+</html>
