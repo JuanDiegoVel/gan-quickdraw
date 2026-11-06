@@ -27,8 +27,9 @@ GAN-QuickDraw/
 ├── README.md               Este documento
 ├── exportar_web.py         Pasa el modelo entrenado a la página web (docs/modelo/)
 ├── ver_pagina.bat          Doble clic: abre la página en http://localhost:8000
-├── docs/                   Página web del proyecto (GitHub Pages)
-│   ├── index.html          Página con scroll cinematográfico
+├── docs/                   Página web del proyecto (Firebase Hosting)
+│   ├── index.html          La página (6 secciones, una por punto de la tarea)
+│   ├── css/estilos.css     Sistema visual: diseño de tastecode.dev con reglas de taste-skill
 │   ├── js/red.js           Las dos redes ejecutadas en JavaScript
 │   ├── js/trabajador.js    Web Worker para no trabar el scroll
 │   ├── js/app.js           Dibujos, gráficas y visor de código
@@ -303,15 +304,23 @@ La animación `resultados/evolucion.gif` muestra las 25 épocas seguidas.
 La carpeta `docs/` tiene una página que presenta **solo los puntos de la tarea**, numerados
 igual que en el enunciado. El modelo entrenado corre en el navegador, sin servidor:
 
-1. **Red Generadora:** escena con los valores reales de cada capa (ruido z, mapas de activación, dibujo) y tabla de parámetros.
-2. **Red Discriminadora:** escena con sus mapas de activación y la probabilidad de «real», y tabla de parámetros.
+1. **Red Generadora:** los valores reales de cada capa en vivo (ruido z, mapas de activación, dibujo) y la tabla de parámetros.
+2. **Red Discriminadora:** sus mapas de activación en vivo, la probabilidad de «real» y la tabla de parámetros.
 3. **Funciones de pérdida:** fórmulas (minimax, L_D, L_G, BCE) y la gráfica de cada una.
 4. **Código:** dónde se define y dónde se crea cada red, con el código comentado.
 5. **Valores:** el scroll recorre las 25 épocas; gráficas de D(x), D(G(z)) y pérdidas; pesos antes y después.
 6. **Resultado:** dibujos reales contra generados, con la categoría usada (**cat**).
 
-Está hecha con el skill **scroll-cinematic-landing** (estilo Apple, scroll cinematográfico,
-sin librerías externas) y está pensada para escritorio (900 px de ancho o más).
+El diseño sigue el de **tastecode.dev**: fondo negro, tinta cálida, rieles finos, tarjetas y
+botones casi cuadrados. La portada es una pared de gatos que dibuja la red Generadora entrenada.
+La tipografía y las animaciones son las de la primera versión de la página:
+
+- **Tipografía:** las fuentes del sistema estilo Apple, con títulos en negrita muy apretados.
+- **Portada:** la pared de gatos crece de tarjeta a pantalla completa al bajar.
+- **Escenas de la Generadora, la Discriminadora y las épocas:** un panel sube y cubre la imagen mientras su texto se enciende palabra por palabra.
+- **Títulos y bloques:** aparecen al entrar en pantalla, y los contadores cuentan.
+
+En tableta, celular o con movimiento reducido se ve la composición final, sin animación.
 
 `exportar_web.py` guarda los pesos en `float16` y funde cada BatchNorm con su capa;
 `docs/js/red.js` ejecuta las redes con JavaScript. Se comparó con PyTorch y la

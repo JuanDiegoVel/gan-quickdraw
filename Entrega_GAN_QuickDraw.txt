@@ -147,8 +147,8 @@ REVISIÓN REALIZADA (6 de noviembre de 2026)
   [OK] El modelo que corre en la página da los mismos resultados que PyTorch
        (diferencia máxima de 0.001 en los píxeles).
 
-  Nota: la página está pensada para computador (900 px de ancho o más), siguiendo el
-  estilo de scroll cinematográfico usado.
+  [OK] La página funciona en computador, tableta y celular. Su diseño sigue el de
+       tastecode.dev, con la tipografía y las animaciones de scroll de la primera versión.
 
 
 =======================================================================
