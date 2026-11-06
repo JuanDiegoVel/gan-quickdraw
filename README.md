@@ -9,7 +9,11 @@ entrenamiento y el resultado final.
 > **Categoría usada: `cat` (gato)**, 30 000 dibujos de 28x28 píxeles tomados al azar de los
 > 123 202 disponibles en Quick Draw.
 >
+> **Autor:** Juan Diego Velasco Quintero
+>
 > **Página web del proyecto:** https://gan-quickdraw-usta.web.app
+>
+> **Repositorio:** https://github.com/JuanDiegoVel/gan-quickdraw
 
 ---
 
@@ -61,7 +65,7 @@ python gan_quickdraw.py
 ```
 
 También se puede abrir `GAN_QuickDraw.ipynb` en VS Code, Jupyter o Google Colab y
-ejecutar las celdas en orden. En CPU el entrenamiento tarda unos 20 minutos; con GPU
+ejecutar las celdas en orden. En CPU el entrenamiento tarda unos 16 minutos; con GPU
 (CUDA) el código la usa automáticamente.
 
 Para probar otra categoría basta con cambiar `CATEGORIA` en la sección 1 del código

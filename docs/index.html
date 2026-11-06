@@ -40,9 +40,10 @@ nav a:hover{color:#fff}
 .stick{position:sticky;top:0;height:100vh;overflow:hidden}
 .hero .media{position:absolute;inset:0;overflow:hidden;will-change:clip-path;clip-path:inset(14% 20% 14% 20% round 28px);background:#050506}
 .hero .media .muro{transform:scale(1.2)}
-.hero .copy{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 24px;will-change:transform,opacity}
-.hero h1{font-size:clamp(56px,9vw,120px);font-weight:700;letter-spacing:-.04em;line-height:1}
-.hero p{font-size:clamp(20px,2.2vw,28px);color:#d2d2d7;margin:18px 0 0;max-width:720px;line-height:1.3}
+/* El texto queda dentro de la imagen de fondo (que ocupa el 60% del ancho al inicio) */
+.hero .copy{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 24vw;will-change:transform,opacity}
+.hero h1{font-size:clamp(44px,6.2vw,100px);font-weight:700;letter-spacing:-.04em;line-height:1}
+.hero p{font-size:clamp(18px,1.7vw,24px);color:#d2d2d7;margin:18px 0 0;max-width:640px;line-height:1.3}
 .hero p.eyebrow{font-size:17px;font-weight:600;color:#d2d2d7;margin:0 0 18px;letter-spacing:.01em}
 .hero p.eyebrow b{color:var(--text)}
 .hero .reveal2{position:absolute;bottom:12vh;left:0;right:0;text-align:center;font-size:clamp(28px,4vw,56px);font-weight:600;letter-spacing:-.03em;opacity:0;will-change:opacity,transform;text-shadow:0 2px 24px #000,0 0 60px #000}
@@ -470,7 +471,7 @@ footer a:hover{color:#fff}
   </div>
 </section>
 
-<footer><span>Proyecto académico · 2026 · GAN con PyTorch · Categoría usada: cat (gato)</span><span>Fuentes: <a href="https://developers.google.com/machine-learning/gan?hl=es-419" target="_blank" rel="noopener">Google ML · GAN</a> · <a href="https://poloclub.github.io/ganlab/" target="_blank" rel="noopener">GAN Lab</a> · <a href="https://quickdraw.withgoogle.com/data" target="_blank" rel="noopener">Quick, Draw! Dataset</a></span></footer>
+<footer><span><b style="color:#f5f5f7;font-weight:600">Juan Diego Velasco Quintero</b> · Proyecto académico 2026 · Categoría usada: cat (gato) · <a href="https://github.com/JuanDiegoVel/gan-quickdraw" target="_blank" rel="noopener">Repositorio en GitHub</a></span><span>Fuentes: <a href="https://developers.google.com/machine-learning/gan?hl=es-419" target="_blank" rel="noopener">Google ML · GAN</a> · <a href="https://poloclub.github.io/ganlab/" target="_blank" rel="noopener">GAN Lab</a> · <a href="https://quickdraw.withgoogle.com/data" target="_blank" rel="noopener">Quick, Draw! Dataset</a></span></footer>
 
 <div class="tooltip" id="tooltip" hidden></div>
 

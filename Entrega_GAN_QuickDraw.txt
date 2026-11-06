@@ -1,0 +1,172 @@
+GAN CON GOOGLE QUICK, DRAW!
+Red neuronal Generadora vs. Red neuronal Discriminadora
+=======================================================================
+
+AUTOR: Juan Diego Velasco Quintero
+
+CATEGORÍA USADA: cat (gato)
+
+ENLACES
+  Página web .... https://gan-quickdraw-usta.web.app
+  Repositorio ... https://github.com/JuanDiegoVel/gan-quickdraw
+  Código ........ gan_quickdraw.py  (el mismo código ya ejecutado: GAN_QuickDraw.ipynb)
+
+DATOS
+  - Dataset: Google Quick, Draw! (https://quickdraw.withgoogle.com/data), categoría "cat".
+  - La categoría tiene 123 202 dibujos; se usaron 30 000 tomados al azar (semilla 42).
+  - Cada dibujo es una imagen de 28x28 píxeles en escala de grises, escalada a [-1, 1].
+  - Modelo: GAN convolucional (estilo DCGAN) en PyTorch, entrenada 25 épocas en CPU (~16 min).
+
+
+=======================================================================
+CÓMO SE CUMPLE CADA PUNTO DE LA TAREA
+(la página web está numerada con estos mismos puntos)
+=======================================================================
+
+1. PARÁMETROS DE LA RED NEURONAL GENERADORA (G)
+   Convierte un ruido aleatorio z de 100 números en un dibujo de 28x28.
+
+     Capa              Tipo                      Salida       Parámetros
+     capa1_lineal      Linear 100 -> 6272        6272            627 200
+     capa1_batchnorm   BatchNorm1d               6272             12 544
+     capa1_relu        ReLU                      6272                  0
+     redimensionar     Unflatten                 128x7x7               0
+     capa2_deconv      ConvTranspose2d 128->64   64x14x14        131 072
+     capa2_batchnorm   BatchNorm2d               64x14x14            128
+     capa2_relu        ReLU                      64x14x14              0
+     capa3_deconv      ConvTranspose2d 64->1     1x28x28           1 025
+     salida_tanh       Tanh                      1x28x28               0
+                                                 TOTAL           771 969
+
+   - Dimensión latente = 100: tamaño del ruido z; cada z distinto da un gato distinto.
+   - ConvTranspose2d (kernel 4, stride 2, padding 1): duplica alto y ancho (7 -> 14 -> 28).
+   - BatchNorm: normaliza cada lote y estabiliza el entrenamiento.
+   - ReLU en capas ocultas y Tanh en la salida (píxeles entre -1 y 1, como los datos reales).
+   - Optimizador Adam, lr = 0.0002, beta1 = 0.5 (valores recomendados por DCGAN).
+
+2. PARÁMETROS DE LA RED NEURONAL DISCRIMINADORA (D)
+   Recibe un dibujo de 28x28 y devuelve la probabilidad de que sea real (0 a 1).
+
+     Capa              Tipo                      Salida       Parámetros
+     capa1_conv        Conv2d 1 -> 64            64x14x14          1 088
+     capa1_leakyrelu   LeakyReLU(0.2)            64x14x14              0
+     capa2_conv        Conv2d 64 -> 128          128x7x7         131 072
+     capa2_batchnorm   BatchNorm2d               128x7x7             256
+     capa2_leakyrelu   LeakyReLU(0.2)            128x7x7               0
+     aplanar           Flatten                   6272                  0
+     capa3_lineal      Linear 6272 -> 1          1                 6 273
+     salida_sigmoid    Sigmoid                   1                     0
+                                                 TOTAL           138 689
+
+   - Conv2d (kernel 4, stride 2, padding 1): 64 y 128 filtros; reduce a la mitad (28 -> 14 -> 7).
+   - LeakyReLU 0.2: deja pasar el 20% de los negativos para que el gradiente no se apague.
+   - Sin BatchNorm en la primera capa (recomendación DCGAN).
+   - Sigmoid en la salida: 1 = real, 0 = falso.
+   - Optimizador Adam propio, lr = 0.0002, beta1 = 0.5.
+
+   Parámetros comunes del entrenamiento: lote de 128 (234 lotes por época), 25 épocas,
+   pesos iniciales Normal(0, 0.02), pérdida BCE, semilla 42.
+
+3. FUNCIONES DE PÉRDIDA
+   Juego minimax (Goodfellow, 2014; curso de GAN de Google):
+       min_G max_D  E[log D(x)] + E[log(1 - D(G(z)))]
+
+   - Pérdida del Discriminador:  L_D = -[ log D(x) + log(1 - D(G(z))) ]
+       En el código: BCE(D(x), 1) + BCE(D(G(z)), 0)
+   - Pérdida del Generador (minimax modificada / no saturante):  L_G = -log D(G(z))
+       En el código: BCE(D(G(z)), 1)
+   - Base de las dos: entropía cruzada binaria  BCE(p, y) = -[ y*log(p) + (1-y)*log(1-p) ]
+
+   Se usa la versión no saturante para G porque al inicio D rechaza los dibujos falsos con
+   facilidad (D(G(z)) cerca de 0) y ahí la pérdida original casi no tiene pendiente.
+
+4. EN EL CÓDIGO: DÓNDE SE CREA CADA RED (TODO COMENTADO)
+   Archivo gan_quickdraw.py. Cada red tiene un recuadro "AQUÍ SE DEFINE" en su clase y
+   otro ">>> AQUÍ SE CREA <<<" donde se instancia.
+
+     Qué                                              Sección   Línea(s)
+     Categoría usada: CATEGORIA = "cat"               1         69
+     Se define la red Generadora (class Generador)    3         242-274 (clase en 246)
+     Se define la red Discriminadora (class Discrim.) 4         301-329 (clase en 305)
+     Se crea la red Generadora: G = Generador(...)    5         355-359 (G en 358)
+     Se crea la red Discriminadora: D = Discrim.(...) 5         361-365 (D en 364)
+     Función de pérdida del Discriminador             6         481
+     Función de pérdida del Generador                 6         493
+     Optimizadores (uno por red)                      7         530
+     Ciclo de entrenamiento (paso D y paso G)         8         571
+
+   En la página (sección 4) cada línea es un enlace que muestra el archivo completo y
+   resalta ese bloque.
+
+5. VALORES DEL GENERADOR Y DEL DISCRIMINADOR
+   D(x) = probabilidad que D da a los dibujos reales; D(G(z)) = la que da a los falsos.
+
+     Época   Pérdida D   Pérdida G    D(x)    D(G(z))
+       1       0.341       3.053      0.884    0.128
+       5       0.244       2.845      0.906    0.095
+      10       0.323       3.069      0.900    0.100
+      15       0.577       3.159      0.850    0.145
+      20       0.123       3.430      0.944    0.057
+      25       0.064       4.245      0.970    0.030
+
+   Pesos antes y después de entrenar (desviación estándar):
+     G capa1_lineal  0.0200 -> 0.0266      D capa1_conv    0.0201 -> 0.0222
+     G capa2_deconv  0.0200 -> 0.0266      D capa2_conv    0.0200 -> 0.0243
+     G capa3_deconv  0.0191 -> 0.1044      D capa3_lineal  0.0200 -> 0.0444
+
+   Lectura: con un generador perfecto D(x) y D(G(z)) quedarían en 0.5. En la práctica el
+   discriminador va ganando (0.97 contra 0.03 al final), algo común porque clasificar es
+   más fácil que dibujar. Aun así el generador sí aprendió: sus dibujos son gatos
+   reconocibles. Todos los valores por época están en resultados/historial_entrenamiento.csv
+   y los de cada capa en resultados/reporte_valores.txt.
+
+6. RESULTADO DE LA GAN Y CATEGORÍA USADA
+   Categoría: cat (gato). La red Generadora aprendió los rasgos de un gato de Quick Draw:
+   cabeza redonda, orejas en punta, ojos y bigotes, con variedad (caras de frente, cuerpos
+   enteros y gatos de lado).
+   - Página, sección 6: dibujos reales al lado de los generados en la época 25.
+   - resultados/06_resultado_gan.png y resultados/evolucion.gif (las 25 épocas).
+   - Discriminador final con 1000 reales y 1000 generados: 0.814 y 0.058 en promedio.
+
+
+=======================================================================
+REVISIÓN REALIZADA (6 de noviembre de 2026)
+=======================================================================
+  [OK] Repositorio en GitHub con 5 commits: código, notebook, README, resultados, página
+       web y configuración de Firebase. No incluye el dataset (96 MB) ni el entorno virtual.
+  [OK] El notebook tiene exactamente el mismo código que gan_quickdraw.py: 22 celdas,
+       0 errores, 8 gráficas.
+  [OK] Todos los números del README y de la página coinciden con
+       resultados/historial_entrenamiento.csv y resultados/resumen.json.
+  [OK] Las 9 líneas citadas apuntan al código correcto.
+  [OK] Página publicada en Firebase: carga sin errores ni archivos 404, tiene las 6
+       secciones, y los enlaces del código resaltan la línea correcta.
+  [OK] El título de la portada queda dentro de la imagen de fondo en pantallas de
+       1024 a 1920 px de ancho.
+  [OK] El modelo que corre en la página da los mismos resultados que PyTorch
+       (diferencia máxima de 0.001 en los píxeles).
+
+  Nota: la página está pensada para computador (900 px de ancho o más), siguiendo el
+  estilo de scroll cinematográfico usado.
+
+
+=======================================================================
+CÓMO EJECUTARLO
+=======================================================================
+  py -m venv .venv
+  .venv\Scripts\activate
+  pip install torch --index-url https://download.pytorch.org/whl/cpu
+  pip install numpy matplotlib pillow ipykernel nbconvert
+  python gan_quickdraw.py      (entrena y guarda todo en resultados/)
+  python exportar_web.py       (actualiza el modelo de la página)
+
+  Ver la página en el computador: doble clic en ver_pagina.bat (http://localhost:8000).
+
+
+REFERENCIAS
+  - Google for Developers, Redes generativas adversarias:
+    https://developers.google.com/machine-learning/gan?hl=es-419
+  - GAN Lab: https://poloclub.github.io/ganlab/
+  - The Quick, Draw! Dataset: https://quickdraw.withgoogle.com/data
+  - Goodfellow et al. (2014), Generative Adversarial Nets.
+  - Radford et al. (2015), Unsupervised Representation Learning with Deep Convolutional GANs.
