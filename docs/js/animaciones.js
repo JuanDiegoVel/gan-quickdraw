@@ -12,7 +12,11 @@
 (function () {
   "use strict";
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var vivo = function () { return !reduce && innerWidth >= 1024; };
+  // se anima desde 900 px de ancho (el mínimo de la primera página), sin movimiento reducido y solo si
+  // la hoja de estilos cargada es la de esta versión (si el navegador tuviera guardada una vieja, la
+  // página se queda quieta en vez de esconder textos)
+  var cssOk = function () { return getComputedStyle(document.documentElement).getPropertyValue("--anim").trim() === "1"; };
+  var vivo = function () { return !reduce && innerWidth >= 900 && cssOk(); };
   var vh = function () { return innerHeight; };
   var clamp = function (v, a, b) { return Math.min(b, Math.max(a, v)); };
   // curva casi lineal en los extremos: al invertir el scroll el movimiento responde de inmediato
@@ -44,8 +48,9 @@
   var cur = scrollY;
   function prog(el) {
     var r = el.getBoundingClientRect();
-    var top = r.top + (scrollY - cur);
-    return clamp(-top / (r.height - vh()), 0, 1);
+    var top = r.top + (scrollY - cur), largo = r.height - vh();
+    if (largo <= 1) return 0;   // la sección no es más alta que la pantalla: no hay recorrido que animar
+    return clamp(-top / largo, 0, 1);
   }
 
   var hero = document.querySelector(".hero");
@@ -94,9 +99,12 @@
       s._w.forEach(function (w, k) { var o = clamp(rv - k, 0, 6) / 6; w.style.opacity = o; w.style.transform = "translateY(" + ((1 - o) * 14) + "px)"; });
       // la escena de valores recorre las 25 épocas
       if (epocas) window.mostrarEpoca(1 + Math.round(clamp((q - 0.04) / 0.82, 0, 1) * 24));
-      var tf = clamp((q - 0.25) / 0.35, 0, 1);
-      t.style.opacity = 1 - 0.85 * tf;
-      t.style.transform = "translateY(" + (-50 * tf) + "px)";
+      // el título se va hacia arriba y desaparece del todo antes de que llegue el panel,
+      // para que nunca quede encima de la tabla
+      var red = s.classList.contains("scene--red");
+      var tf = red ? clamp((q - 0.1) / 0.28, 0, 1) : clamp((q - 0.2) / 0.3, 0, 1);
+      t.style.opacity = 1 - tf;
+      t.style.transform = "translateY(" + (-60 * tf) + "px)";
     });
   }
   window.redibujarAnimaciones = frame;

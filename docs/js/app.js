@@ -175,7 +175,7 @@
       });
       var botones = $(".hero__foot .btn-row").getBoundingClientRect(), texto = $(".hero__text").getBoundingClientRect(), nota = $(".hero__note").getBoundingClientRect();
       copy.style.transform = guardado;
-      window.HERO_CARD = m.width >= 1024
+      window.HERO_CARD = m.width >= 900
         ? { t: 40, r: gut, b: m.height - (botones.top - m.top - 28), l: Math.min(der + 56, m.width * 0.62) }
         : { t: nota.bottom - m.top + 20, r: gut, b: m.height - (texto.top - m.top - 24), l: gut };
     }

@@ -47,8 +47,9 @@
   --m-in: 140ms;
   --m-out: 200ms;
   --m-press: 90ms;
+  --anim: 1;                 /* marca: el JavaScript solo anima si esta hoja de estilos está cargada */
 }
-@media (max-width: 1023px) { :root { --gut: 48px; } }
+@media (max-width: 899px) { :root { --gut: 48px; } }
 @media (max-width: 639px) {
   :root { --gut: 24px; --gutter: 12px; --padt: 96px; --padb: 48px; --nav: 56px; --t-lead: 18px; --t-h3: 21px; }
 }
@@ -85,7 +86,7 @@ code, .mono { font-family: var(--mono); }
 .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--gutter); }
 .c3 { grid-column: span 3; } .c4 { grid-column: span 4; } .c5 { grid-column: span 5; }
 .c6 { grid-column: span 6; } .c7 { grid-column: span 7; } .c12 { grid-column: 1 / -1; }
-@media (max-width: 1023px) {
+@media (max-width: 899px) {
   .c3 { grid-column: span 6; } .c4, .c5, .c6, .c7 { grid-column: 1 / -1; }
 }
 @media (max-width: 639px) { .c3 { grid-column: 1 / -1; } }
@@ -168,7 +169,7 @@ main > section + section::before, .closing::before {
 .head .kicker { grid-column: 1 / -1; margin-bottom: 18px; }
 .head h2 { grid-column: 1 / span 7; }
 .head .lead { grid-column: 8 / -1; }
-@media (max-width: 1023px) {
+@media (max-width: 899px) {
   .head h2, .head .lead { grid-column: 1 / -1; }
   .head .lead { margin-top: 20px; }
 }
@@ -201,7 +202,7 @@ main > section.hero { height: 230vh; padding: 0; }
 .hero__facts dd { font: 700 clamp(32px, 3.4vw, 56px)/1.05 var(--font); letter-spacing: -.04em; margin-top: 4px; font-variant-numeric: tabular-nums; }
 .hero .reveal2 { position: absolute; left: 0; right: 0; bottom: 12vh; z-index: 2; padding: 0 24px; text-align: center; font: 600 clamp(28px, 4vw, 56px)/1.1 var(--font); letter-spacing: -.03em; opacity: 0; will-change: opacity, transform; pointer-events: none; }
 .hero .reveal2 small { display: block; font: 400 19px/1.4 var(--font); letter-spacing: 0; color: var(--soft); margin-top: 12px; }
-@media (max-width: 1023px) {
+@media (max-width: 899px) {
   .hero__lead, .hero__foot .btn-row { grid-column: 1 / -1; }
   .hero__foot .btn-row { justify-content: flex-start; margin-top: 24px; }
   .hero__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 16px; }
@@ -224,6 +225,8 @@ main > section.scene { height: 240vh; padding: 0; }
   box-shadow: 0 -40px 80px rgba(0, 0, 0, .6), inset 0 1px 0 var(--line-strong);
   transform: translateY(100%); will-change: transform;
 }
+/* en la Generadora y la Discriminadora el panel cubre toda la pantalla: el título no queda encima de la tabla */
+.scene--red .panel { height: calc(100vh - var(--nav)); padding-top: 48px; }
 .scene .panel h2 { font: 700 var(--t-panel)/1.08 var(--font); letter-spacing: -.03em; }
 .scene .panel p { font-size: 21px; line-height: 1.45; color: var(--muted); }
 .scene .panel p b { color: var(--ink); font-weight: 600; }
@@ -257,7 +260,7 @@ main > section.scene { height: 240vh; padding: 0; }
 .medidor__marca { position: absolute; top: 50%; left: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 3px var(--raise); transition: left .6s var(--m-ease); }
 .medidor__ejes { display: flex; justify-content: space-between; margin-top: 10px; }
 .veredicto { font: 700 72px/1 var(--font); letter-spacing: -.04em; font-variant-numeric: tabular-nums; text-align: center; }
-@media (max-width: 1023px) {
+@media (max-width: 899px) {
   .red__body { grid-template-columns: 1fr 1fr; gap: 28px 20px; padding: 24px; }
   .red__body .flecha { display: none; }
 }
@@ -297,7 +300,7 @@ main > section.scene { height: 240vh; padding: 0; }
 .formula__f sub { font-size: .75em; }
 .formula p { color: var(--soft); line-height: 1.4; }
 .formula .chip--line { align-self: flex-start; }
-@media (max-width: 1023px) { .formula { min-height: 0; } .formula h3 { margin-top: 12px; } .graf { height: 240px; } }
+@media (max-width: 899px) { .formula { min-height: 0; } .formula h3 { margin-top: 12px; } .graf { height: 240px; } }
 
 /* gráficas */
 .graf-card { padding: 28px; display: flex; flex-direction: column; gap: 10px; }
@@ -367,7 +370,7 @@ main > section.scene { height: 240vh; padding: 0; }
 .cifras div { padding-top: 16px; }
 .cifras dt { font: 400 14px/1.4 var(--font); color: var(--muted); }
 .cifras dd { font: 700 56px/1.05 var(--font); letter-spacing: -.04em; margin-top: 4px; font-variant-numeric: tabular-nums; }
-@media (max-width: 1023px) { .tira__celdas { grid-template-columns: repeat(8, minmax(0, 1fr)); } .cifras { grid-template-columns: repeat(2, 1fr); row-gap: 16px; } .cifras dd { font-size: 40px; } }
+@media (max-width: 899px) { .tira__celdas { grid-template-columns: repeat(8, minmax(0, 1fr)); } .cifras { grid-template-columns: repeat(2, 1fr); row-gap: 16px; } .cifras dd { font-size: 40px; } }
 @media (max-width: 639px) { .tira__celdas { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; } .tira__celdas canvas:nth-child(n + 13) { display: none; } }
 
 /* ------------------------------------------------------------------ resultado */
@@ -387,7 +390,7 @@ main > section.scene { height: 240vh; padding: 0; }
 .directorio a, .directorio li { color: var(--soft); font-size: 15px; width: fit-content; }
 .directorio a:hover { color: #fff; }
 .legal { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-top: 20px; border-top: 1px solid var(--line); }
-@media (max-width: 1023px) { .directorio > div { grid-column: span 6; } }
+@media (max-width: 899px) { .directorio > div { grid-column: span 6; } }
 @media (max-width: 639px) { .directorio > div { grid-column: 1 / -1; } .cierre { padding-bottom: 40px; } }
 
 /* ------------------------------------------------------------------ animaciones de la primera página */
@@ -403,12 +406,12 @@ main > section.scene { height: 240vh; padding: 0; }
 .sp.in .w > span { transform: none; }
 
 /* ------------------------------------------------------------------ sin animación: tableta, celular y movimiento reducido */
-@media (max-width: 1023px) {
+@media (max-width: 899px) {
   main > section:not(.hero):not(.scene), .closing { height: auto; min-height: calc(var(--h, 1) * 100svh); }
   .g2 { height: auto; display: flex; flex-direction: column; gap: calc(var(--padt) + var(--padb)); }
   .visor pre { height: 520px; flex: none; }
 }
-@media (max-width: 1023px), (prefers-reduced-motion: reduce) {
+@media (max-width: 899px), (prefers-reduced-motion: reduce) {
   main > section.hero { height: 100svh; }
   .hero .reveal2, .hero .dim { display: none; }
   main > section.scene { height: auto; }

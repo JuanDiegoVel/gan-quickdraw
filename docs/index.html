@@ -6,7 +6,7 @@
 <title>GAN Quick Draw</title>
 <meta name="description" content="GAN entrenada con 30 000 dibujos de gatos de Google Quick, Draw!: parámetros de la red Generadora y la Discriminadora, funciones de pérdida, código, valores y resultado. Por Juan Diego Velasco Quintero.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23000'/%3E%3Cpath d='M8 25 Q6 15 9 7 L13 12 Q16 11 19 12 L23 7 Q26 15 24 25 Q16 29 8 25Z' fill='none' stroke='%23f2f2ee' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='20' cy='18' r='1.6' fill='%23fe8549'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="css/estilos.css">
+<link rel="stylesheet" href="css/estilos.css?v=20261106-7">
 </head>
 <body>
 <!-- diseño: tastecode.dev · tipografía y animaciones: primera página (scroll-cinematic-landing) -->
@@ -63,7 +63,7 @@
   </section>
 
   <!-- 1. Red neuronal Generadora: escena con panel -->
-  <section class="scene" id="generadora" data-scene aria-labelledby="t-g">
+  <section class="scene scene--red" id="generadora" data-scene aria-labelledby="t-g">
     <div class="stick">
       <div class="media">
         <div class="wrap grupo escena__grupo">
@@ -122,7 +122,7 @@
   </section>
 
   <!-- 2. Red neuronal Discriminadora: escena con panel -->
-  <section class="scene" id="discriminadora" data-scene aria-labelledby="t-d">
+  <section class="scene scene--red" id="discriminadora" data-scene aria-labelledby="t-d">
     <div class="stick">
       <div class="media">
         <div class="wrap grupo escena__grupo">
@@ -383,10 +383,10 @@
 
 <div class="tooltip" id="tooltip" hidden></div>
 
-<script src="modelo/datos.js"></script>
-<script src="modelo/codigo.js"></script>
-<script src="js/red.js"></script>
-<script src="js/app.js"></script>
-<script src="js/animaciones.js"></script>
+<script src="modelo/datos.js?v=20261106-7"></script>
+<script src="modelo/codigo.js?v=20261106-7"></script>
+<script src="js/red.js?v=20261106-7"></script>
+<script src="js/app.js?v=20261106-7"></script>
+<script src="js/animaciones.js?v=20261106-7"></script>
 </body>
 </html>
