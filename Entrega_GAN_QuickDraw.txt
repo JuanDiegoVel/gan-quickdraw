@@ -15,7 +15,7 @@ DATOS
   - Dataset: Google Quick, Draw! (https://quickdraw.withgoogle.com/data), categoría "cat".
   - La categoría tiene 123 202 dibujos; se usaron 30 000 tomados al azar (semilla 42).
   - Cada dibujo es una imagen de 28x28 píxeles en escala de grises, escalada a [-1, 1].
-  - Modelo: GAN convolucional (estilo DCGAN) en PyTorch, entrenada 25 épocas en CPU (~16 min).
+  - Modelo: GAN convolucional (estilo DCGAN) en PyTorch, entrenada 25 épocas en CPU (12.6 min).
 
 
 =======================================================================
@@ -132,8 +132,9 @@ CÓMO SE CUMPLE CADA PUNTO DE LA TAREA
 =======================================================================
 REVISIÓN REALIZADA (6 de noviembre de 2026)
 =======================================================================
-  [OK] Repositorio en GitHub con 5 commits: código, notebook, README, resultados, página
-       web y configuración de Firebase. No incluye el dataset (96 MB) ni el entorno virtual.
+  [OK] Repositorio en GitHub con todo el proyecto: código, notebook, README, resultados,
+       página web y configuración de Firebase. No incluye el dataset (96 MB) ni el entorno
+       virtual.
   [OK] El notebook tiene exactamente el mismo código que gan_quickdraw.py: 22 celdas,
        0 errores, 8 gráficas.
   [OK] Todos los números del README y de la página coinciden con

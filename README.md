@@ -65,7 +65,7 @@ python gan_quickdraw.py
 ```
 
 También se puede abrir `GAN_QuickDraw.ipynb` en VS Code, Jupyter o Google Colab y
-ejecutar las celdas en orden. En CPU el entrenamiento tarda unos 16 minutos; con GPU
+ejecutar las celdas en orden. En CPU el entrenamiento tarda unos 13 minutos; con GPU
 (CUDA) el código la usa automáticamente.
 
 Para probar otra categoría basta con cambiar `CATEGORIA` en la sección 1 del código
@@ -294,7 +294,7 @@ La animación `resultados/evolucion.gif` muestra las 25 épocas seguidas.
 | Parámetros de la red Discriminadora | 138 689 |
 | Pérdida D / Pérdida G (época 25) | 0.064 / 4.245 |
 | D(x) / D(G(z)) (época 25) | 0.970 / 0.030 |
-| Tiempo de entrenamiento | unos 16 minutos en CPU |
+| Tiempo de entrenamiento | 12.6 minutos en CPU |
 
 ---
 
