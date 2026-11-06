@@ -8,6 +8,8 @@ entrenamiento y el resultado final.
 
 > **Categoría usada: `cat` (gato)**, 30 000 dibujos de 28x28 píxeles tomados al azar de los
 > 123 202 disponibles en Quick Draw.
+>
+> **Página web del proyecto:** https://gan-quickdraw-usta.web.app
 
 ---
 
@@ -314,8 +316,11 @@ diferencia máxima es de 0.001 en los píxeles.
 Para verla en el computador: **doble clic en `ver_pagina.bat`**, que abre
 http://localhost:8000 (no cierres la ventana negra mientras la ves). También se puede
 desde la carpeta del proyecto con `py -m http.server 8000 --directory docs`; en Windows usa
-`py`, porque `python` puede abrir la Microsoft Store. Para publicarla: GitHub → Settings →
-Pages → rama `main`, carpeta `/docs`.
+`py`, porque `python` puede abrir la Microsoft Store.
+
+Está publicada en **Firebase Hosting**: https://gan-quickdraw-usta.web.app (proyecto
+`gan-quickdraw-usta`). Para volver a publicarla después de un cambio:
+`firebase deploy --only hosting`.
 
 ---
 
