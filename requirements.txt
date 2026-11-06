@@ -1,0 +1,9 @@
+# Librerías necesarias para ejecutar gan_quickdraw.py
+torch          # Redes neuronales (PyTorch). Versión CPU: pip install torch --index-url https://download.pytorch.org/whl/cpu
+numpy          # Manejo de los datos de Quick Draw (.npy)
+matplotlib     # Gráficas de pérdidas, valores e imágenes
+pillow         # Animación GIF de la evolución del generador
+
+# Solo para abrir/ejecutar el notebook GAN_QuickDraw.ipynb
+ipykernel
+nbconvert

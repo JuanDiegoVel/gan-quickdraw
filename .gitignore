@@ -1,0 +1,13 @@
+# Entorno virtual de Python (cada uno crea el suyo)
+.venv/
+
+# Dataset de Quick Draw (96 MB): gan_quickdraw.py lo descarga solo si no existe
+datos/
+
+# Archivos temporales
+__pycache__/
+.ipynb_checkpoints/
+
+# Caché y registros de Firebase
+.firebase/
+firebase-debug.log
