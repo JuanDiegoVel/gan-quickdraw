@@ -665,7 +665,11 @@ for clave, color, nombre in [("perdida_D", COLOR_D, "Discriminador"), ("perdida_
 ax1.set_title("Funciones de pérdida durante el entrenamiento", fontsize=11)
 ax1.set_xlabel("Época")
 ax1.set_ylabel("Pérdida (BCE)")
-ax1.legend(frameon=False)
+# Algunos lotes sueltos tienen picos de hasta ~25; se recorta el eje para que se lean las curvas
+ax1.set_ylim(0, 8)
+ax1.text(0.99, 0.97, "picos mayores a 8 recortados", transform=ax1.transAxes,
+         ha="right", va="top", fontsize=8, color=COLOR_TEXTO)
+ax1.legend(frameon=False, loc="upper left")
 
 # --- D(x) y D(G(z)) por época ---
 epocas = [f["epoca"] for f in historial_epocas]
@@ -679,7 +683,8 @@ ax2.set_ylim(0, 1)
 ax2.set_title("Salida del discriminador (probabilidad de 'real')", fontsize=11)
 ax2.set_xlabel("Época")
 ax2.set_ylabel("Probabilidad promedio")
-ax2.legend(frameon=False, loc="upper right")
+# Leyenda en la franja vacía entre las dos curvas, para que no tape ninguna línea
+ax2.legend(frameon=False, loc="upper left", bbox_to_anchor=(0.01, 0.78))
 fig.tight_layout()
 guardar_y_mostrar(fig, "04_valores_entrenamiento.png")
 
